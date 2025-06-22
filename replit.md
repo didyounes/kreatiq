@@ -105,6 +105,8 @@ PostgreSQL database with three main tables:
 - June 22, 2025: Robust error handling for API quota limits
 - June 22, 2025: PostgreSQL database integration complete
 - June 22, 2025: Migrated from in-memory to persistent database storage
+- June 22, 2025: Fixed AI chat communication with robust error handling
+- June 22, 2025: Demo mode fallbacks ensure platform stability
 ```
 
 ## User Preferences

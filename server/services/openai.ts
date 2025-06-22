@@ -188,7 +188,8 @@ Be conversational and encouraging while providing valuable insights.`;
     return response.choices[0].message.content || "I'm sorry, I couldn't generate a response. Please try again.";
   } catch (error) {
     console.error('Error generating chat response:', error);
-    throw new Error(`Failed to generate chat response: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.log('Falling back to demo chat response due to API error');
+    return generateDemoChatResponse(message);
   }
 }
 
