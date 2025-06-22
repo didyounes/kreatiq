@@ -93,11 +93,16 @@ PostgreSQL database with three main tables:
 - OpenAI API key for content generation
 - Port 5000 for the application server
 
-## Changelog
+## Recent Changes
 
 ```
-Changelog:
-- June 22, 2025. Initial setup
+- June 22, 2025: AI integration with demo mode fallback system
+- June 22, 2025: Content generation works without API key for testing
+- June 22, 2025: Chat interface with intelligent demo responses
+- June 22, 2025: Fixed type errors in storage layer
+- June 22, 2025: Initial platform setup and architecture
+- June 22, 2025: OpenAI API key successfully connected
+- June 22, 2025: Robust error handling for API quota limits
 ```
 
 ## User Preferences

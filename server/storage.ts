@@ -110,6 +110,9 @@ export class MemStorage implements IStorage {
     const idea: ContentIdea = {
       ...insertIdea,
       id,
+      platform: insertIdea.platform || null,
+      status: insertIdea.status || "draft",
+      tags: insertIdea.tags || [],
       createdAt: new Date()
     };
     this.contentIdeas.set(id, idea);
