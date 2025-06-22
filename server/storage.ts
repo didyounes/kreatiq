@@ -4,8 +4,13 @@ import {
   ChatMessage, 
   InsertChatMessage,
   WorkflowTemplate,
-  InsertWorkflowTemplate 
+  InsertWorkflowTemplate,
+  contentIdeas,
+  chatMessages,
+  workflowTemplates
 } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // Content Ideas
@@ -167,4 +172,125 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  async getContentIdeas(): Promise<ContentIdea[]> {
+    const results = await db.select().from(contentIdeas).orderBy(contentIdeas.createdAt);
+    return results.reverse(); // Most recent first
+  }
+
+  async getContentIdea(id: number): Promise<ContentIdea | undefined> {
+    const [result] = await db.select().from(contentIdeas).where(eq(contentIdeas.id, id));
+    return result || undefined;
+  }
+
+  async createContentIdea(insertIdea: InsertContentIdea): Promise<ContentIdea> {
+    const [result] = await db
+      .insert(contentIdeas)
+      .values({
+        ...insertIdea,
+        platform: insertIdea.platform || null,
+        status: insertIdea.status || "draft",
+        tags: insertIdea.tags || []
+      })
+      .returning();
+    return result;
+  }
+
+  async updateContentIdea(id: number, updates: Partial<InsertContentIdea>): Promise<ContentIdea | undefined> {
+    const [result] = await db
+      .update(contentIdeas)
+      .set(updates)
+      .where(eq(contentIdeas.id, id))
+      .returning();
+    return result || undefined;
+  }
+
+  async deleteContentIdea(id: number): Promise<boolean> {
+    const result = await db.delete(contentIdeas).where(eq(contentIdeas.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async getChatMessages(sessionId: string): Promise<ChatMessage[]> {
+    const results = await db
+      .select()
+      .from(chatMessages)
+      .where(eq(chatMessages.sessionId, sessionId))
+      .orderBy(chatMessages.createdAt);
+    return results;
+  }
+
+  async createChatMessage(insertMessage: InsertChatMessage): Promise<ChatMessage> {
+    const [result] = await db
+      .insert(chatMessages)
+      .values(insertMessage)
+      .returning();
+    return result;
+  }
+
+  async getWorkflowTemplates(): Promise<WorkflowTemplate[]> {
+    let results = await db.select().from(workflowTemplates);
+    
+    // Initialize default templates if none exist
+    if (results.length === 0) {
+      await this.initializeDefaultTemplates();
+      results = await db.select().from(workflowTemplates);
+    }
+    
+    return results;
+  }
+
+  async createWorkflowTemplate(insertTemplate: InsertWorkflowTemplate): Promise<WorkflowTemplate> {
+    const [result] = await db
+      .insert(workflowTemplates)
+      .values(insertTemplate)
+      .returning();
+    return result;
+  }
+
+  private async initializeDefaultTemplates() {
+    const defaultTemplates: InsertWorkflowTemplate[] = [
+      {
+        name: "Social Media Series",
+        description: "Automatically generate a week's worth of social media posts based on a single topic",
+        icon: "fas fa-share-alt",
+        gradient: "from-blue-500 to-purple-500",
+        steps: [
+          { name: "Topic Input", description: "Provide main topic or theme" },
+          { name: "Platform Selection", description: "Choose target platforms" },
+          { name: "Content Generation", description: "AI generates varied posts" },
+          { name: "Schedule Planning", description: "Optimize posting times" }
+        ]
+      },
+      {
+        name: "Blog to Social",
+        description: "Transform your blog posts into multiple social media posts and email content",
+        icon: "fas fa-blog",
+        gradient: "from-green-500 to-teal-500",
+        steps: [
+          { name: "Blog Analysis", description: "Extract key points from blog" },
+          { name: "Content Adaptation", description: "Adapt for different platforms" },
+          { name: "Visual Suggestions", description: "Recommend images and graphics" },
+          { name: "Distribution Plan", description: "Create posting schedule" }
+        ]
+      },
+      {
+        name: "Video Content Hub",
+        description: "Create video scripts, thumbnails, descriptions, and promotional posts in one go",
+        icon: "fas fa-video",
+        gradient: "from-red-500 to-pink-500",
+        steps: [
+          { name: "Video Concept", description: "Define video topic and goals" },
+          { name: "Script Writing", description: "Generate detailed script" },
+          { name: "Thumbnail Design", description: "Create eye-catching thumbnails" },
+          { name: "Promotion Strategy", description: "Plan cross-platform promotion" }
+        ]
+      }
+    ];
+
+    for (const template of defaultTemplates) {
+      await db.insert(workflowTemplates).values(template);
+    }
+  }
+}
+
+export const storage = new DatabaseStorage();
